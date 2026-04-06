@@ -11,9 +11,6 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-
-
-
 RUN bun run build
 
 # Stage 2: Serve with nginx

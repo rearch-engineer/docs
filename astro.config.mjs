@@ -5,8 +5,8 @@ import react from "@astrojs/react";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://rearch.engineer",
-  base: "/docs",
+  site: "https://docs.rearch.engineer",
+  base: "/",
   integrations: [
     starlight({
       title: "ReArch Docs",
