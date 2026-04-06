@@ -58,7 +58,7 @@ export default function CourseOverview({
   courseSlug,
   courseTitle,
   lessons,
-  basePath = "/docs/learning",
+  basePath = "/learning",
 }: CourseOverviewProps) {
   const [progress, setProgress] = useState<LearningData>({ courses: {} });
   const [loaded, setLoaded] = useState(false);

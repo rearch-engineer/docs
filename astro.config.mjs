@@ -10,11 +10,14 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "ReArch Docs",
+      editLink: {
+        baseUrl: "https://github.com/rearch-engineer/docs/edit/main/",
+      },
       social: [
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/lab34-es/rearch.engineer",
+          href: "https://github.com/rearch-engineer/docs",
         },
       ],
       components: {

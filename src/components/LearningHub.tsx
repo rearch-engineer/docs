@@ -57,7 +57,7 @@ function saveProgress(data: LearningData): void {
 
 export default function LearningHub({
   courses,
-  basePath = "/docs/learning",
+  basePath = "/learning",
 }: LearningHubProps) {
   const [progress, setProgress] = useState<LearningData>({ courses: {} });
   const [loaded, setLoaded] = useState(false);
@@ -86,9 +86,7 @@ export default function LearningHub({
 
   if (!loaded) return null;
 
-  const enrolledCourses = courses.filter(
-    (c) => !!progress.courses[c.slug],
-  );
+  const enrolledCourses = courses.filter((c) => !!progress.courses[c.slug]);
   const hasEnrolled = enrolledCourses.length > 0;
 
   return (
@@ -100,13 +98,10 @@ export default function LearningHub({
           <div className="hub-enrolled-list">
             {enrolledCourses.map((course) => {
               const courseData = progress.courses[course.slug];
-              const completedCount =
-                courseData?.completedLessons?.length ?? 0;
+              const completedCount = courseData?.completedLessons?.length ?? 0;
               const total = course.lessonCount;
               const percent =
-                total > 0
-                  ? Math.round((completedCount / total) * 100)
-                  : 0;
+                total > 0 ? Math.round((completedCount / total) * 100) : 0;
               const allDone = completedCount === total && total > 0;
               const nextLesson = course.lessonSlugs.find(
                 (s) => !courseData.completedLessons.includes(s),
@@ -131,7 +126,10 @@ export default function LearningHub({
                     </div>
                   </div>
                   <div className="hub-enrolled-right">
-                    <div className="learning-progress-bar" style={{ width: "120px" }}>
+                    <div
+                      className="learning-progress-bar"
+                      style={{ width: "120px" }}
+                    >
                       <div
                         className="learning-progress-bar-fill"
                         style={{ width: `${percent}%` }}
@@ -168,13 +166,10 @@ export default function LearningHub({
         {courses.map((course) => {
           const isEnrolled = !!progress.courses[course.slug];
           const courseData = progress.courses[course.slug];
-          const completedCount =
-            courseData?.completedLessons?.length ?? 0;
+          const completedCount = courseData?.completedLessons?.length ?? 0;
           const total = course.lessonCount;
           const percent =
-            total > 0
-              ? Math.round((completedCount / total) * 100)
-              : 0;
+            total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
           return (
             <div key={course.slug} className="hub-card">
@@ -207,9 +202,7 @@ export default function LearningHub({
                 ) : total > 0 ? (
                   <button
                     className="learning-btn learning-btn-primary learning-btn-sm"
-                    onClick={() =>
-                      enroll(course.slug, course.lessonSlugs[0])
-                    }
+                    onClick={() => enroll(course.slug, course.lessonSlugs[0])}
                   >
                     Enroll
                   </button>

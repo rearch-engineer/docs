@@ -65,7 +65,7 @@ export default function LearningProgress({
   prevLessonSlug,
   prevLessonTitle,
   courseTitle,
-  basePath = "/docs/learning",
+  basePath = "/learning",
 }: LearningProgressProps) {
   const [progress, setProgress] = useState<LearningData>({ courses: {} });
   const [loaded, setLoaded] = useState(false);
