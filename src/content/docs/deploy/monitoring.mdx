@@ -1,0 +1,122 @@
+---
+title: Monitoring & Troubleshooting
+description: Monitor your ReArch deployment and diagnose common issues.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page covers how to monitor a running ReArch deployment and resolve common problems.
+
+## Health Checks
+
+All services in the Docker Compose stack include health checks:
+
+| Service | Health Endpoint | Interval |
+|---|---|---|
+| Frontend | `GET /` (nginx) | 30s |
+| Backend | `GET /health` | 30s |
+| MCP Proxy | `GET /health` | 30s |
+| Keycloak | `GET /health/ready` | 30s |
+| Redis | `redis-cli ping` | 30s |
+| MongoDB | `mongosh --eval "db.runCommand('ping')"` | 30s |
+
+Use `docker service ls` to check the status of all services in the Swarm stack. A service showing `0/1` replicas indicates a failing health check.
+
+## Viewing Logs
+
+### Docker Swarm
+
+```bash
+# All logs for a service
+docker service logs rearch_backend --follow
+
+# Recent logs with timestamps
+docker service logs rearch_backend --since 1h --timestamps
+
+# All services
+docker service logs rearch_frontend --follow
+docker service logs rearch_mcp-proxy --follow
+docker service logs rearch_keycloak --follow
+```
+
+### Local Development
+
+```bash
+./development.sh logs           # All services
+./development.sh logs backend   # Specific service
+./development.sh logs sessions  # Conversation containers
+```
+
+## Common Issues
+
+### Conversation container fails to start
+
+**Symptoms:** Container status shows "error" in the session sidebar. The jobs dashboard shows a failed container setup job.
+
+**Common causes:**
+- Docker image not found — rebuild the image from the repository settings.
+- Docker daemon unreachable — verify that the backend can access `/var/run/docker.sock`.
+- Insufficient disk space — clean up old images with `docker image prune`.
+- Network not found — ensure the overlay network exists (`docker network ls`).
+
+### Agent not responding
+
+**Symptoms:** Messages are sent but the agent does not reply.
+
+**Check:**
+1. Container status is "running" in the session sidebar.
+2. The LLM provider is configured with a valid API key (**Administration > Settings > LLM Providers**).
+3. The selected model is enabled and the provider API is reachable from the backend.
+4. Backend logs show no errors related to the AI SDK.
+
+### MCP tools not available
+
+**Symptoms:** The agent cannot use MCP tools like GitHub, Sentry, etc.
+
+**Check:**
+1. MCP servers are configured and enabled in **Administration > MCP Servers**.
+2. The MCP proxy is healthy (`docker service logs rearch_mcp-proxy`).
+3. The proxy status indicator on the MCP Servers page shows "connected".
+4. `MCP_PROXY_SECRET` matches between the backend and the MCP proxy service.
+
+### Keycloak login redirect loop
+
+**Symptoms:** Clicking login redirects back to the login page repeatedly.
+
+**Check:**
+- The `rearch-app` client in Keycloak has the correct **Valid redirect URIs** and **Web origins**.
+- The frontend is **not** behind Traefik forward-auth middleware (it must be publicly accessible).
+- Cookies are not being blocked by the browser.
+
+See [Keycloak Troubleshooting](/deploy/keycloak/#troubleshooting) for more.
+
+### WebSocket connection fails
+
+**Symptoms:** Real-time updates (agent typing, job status) do not appear. The frontend falls back to polling.
+
+**Check:**
+- Traefik is configured to pass WebSocket upgrades on the `api.<domain>` route.
+- No intermediate proxy (e.g., Cloudflare, AWS ALB) is stripping the `Upgrade: websocket` header.
+- The backend's `FRONTEND_URL` is set correctly for CORS.
+
+### High memory usage
+
+**Symptoms:** The host is running out of memory.
+
+**Check:**
+- Number of active conversation containers (`docker ps | grep conv-`). Each container consumes memory based on its template and workload.
+- Idle container cleanup is configured to stop inactive containers automatically.
+- MongoDB memory usage — consider setting `--wiredTigerCacheSizeGB` if MongoDB is consuming too much RAM.
+
+## Metrics to Monitor
+
+For production deployments, consider monitoring:
+
+| Metric | Source | Why |
+|---|---|---|
+| Active conversation containers | `docker ps` count | Capacity planning |
+| AI cost per day | Usage Analytics dashboard | Budget control |
+| Job queue depth | Redis / BullMQ | Detect backlogs |
+| Disk usage | Host filesystem | Image builds consume disk |
+| MongoDB connections | MongoDB logs | Connection pool exhaustion |
+| Failed jobs count | Jobs dashboard | Operational health |

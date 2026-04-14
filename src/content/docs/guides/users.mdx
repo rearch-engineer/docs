@@ -1,6 +1,70 @@
 ---
 title: Users
-description: Manage users, roles, and permissions in your ReArch organization.
+description: Manage user accounts, roles, and access in ReArch.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+ReArch supports multiple users with role-based access control. Administrators create and manage user accounts, assign roles, and control who can access the platform.
+
+<Aside>User management requires the **Admin** role.</Aside>
+
+## Roles
+
+ReArch defines two roles:
+
+| Role | Permissions |
+|---|---|
+| **User** | Create conversations, send messages, commit and push changes, create pull requests, view own conversations. |
+| **Admin** | Everything a user can do, plus: manage users, configure LLM providers, manage MCP servers, manage skills, view jobs dashboard, access usage analytics, and modify application settings. |
+
+## Account Statuses
+
+| Status | Description |
+|---|---|
+| **Active** | The user can log in and use the platform normally. |
+| **Pending** | The account has been created but is awaiting approval. The user cannot log in. |
+| **Suspended** | The account has been deactivated by an administrator. The user cannot log in. |
+
+## Creating Users
+
+### LOCAL Auth Mode
+
+1. Navigate to **Administration > Users**.
+2. Click **Add User**.
+3. Fill in the user's email, name, and password.
+4. Select a role (`user` or `admin`).
+5. Click **Save**.
+
+The user can now log in with their email and password.
+
+### Keycloak Auth Mode
+
+When using `AUTH_MODE=KEYCLOAK_FIREWALL`, users are created in Keycloak, not in ReArch directly. The backend automatically creates a local user record when someone authenticates for the first time via Keycloak. Roles are synced from the Keycloak token on every request.
+
+To create a user:
+1. Open the Keycloak admin console.
+2. Navigate to the `rearch` realm > **Users** > **Add user**.
+3. Set the email, name, and credentials.
+4. Assign the appropriate realm role (`user` or `admin`) in the **Role mapping** tab.
+
+See [Keycloak Setup](/deploy/keycloak/) for details.
+
+## Editing Users
+
+1. Navigate to **Administration > Users**.
+2. Click on a user to open their profile.
+3. Update the name, role, or status.
+4. Click **Save**.
+
+In Keycloak mode, role changes should be made in Keycloak. The local record is updated on the user's next authenticated request.
+
+## Suspending a User
+
+Set the user's status to **Suspended** from the user management page. The user will be unable to log in or make API requests until reactivated. Existing conversations are preserved but become inaccessible to the suspended user.
+
+## Self-Registration
+
+In LOCAL mode, users can self-register if the **Allow Signups** setting is enabled in **Administration > Settings**. When disabled, only administrators can create accounts.
+
+In Keycloak mode, user registration is controlled by the Keycloak realm settings.

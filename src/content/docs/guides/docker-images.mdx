@@ -1,6 +1,69 @@
 ---
 title: Docker Images
-description: Use and customize Docker images for ReArch environments.
+description: Build and manage the Docker images used for conversation containers.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+Every conversation in ReArch runs inside a Docker container built from a pre-built image. This page covers how Docker images are built, managed, and kept up to date.
+
+## How Images Are Built
+
+When you enable a repository and select a template (or configure a custom `.rearch/` folder), you build a Docker image that contains:
+
+1. **System tools** — VS Code (code-server), OpenCode (AI agent), git, and supervisor.
+2. **Runtime environment** — Language runtimes, databases, and services defined by the template or custom Dockerfile.
+3. **Your code** — The repository is cloned and copied into the image at build time.
+4. **Dependencies** — Package manager install runs during the build so dependencies are baked in.
+
+The resulting image is tagged with the branch's latest commit hash and stored in the local Docker image registry.
+
+## Building an Image
+
+1. Open the repository's settings page (**Resources > [Resource] > [Repository]**).
+2. Select a **template** (Minimal, Node.js, Node.js + Browser) or **Custom** if your repo has a `.rearch/` folder.
+3. Choose the **branch** to build from.
+4. Click **Build Docker Image**.
+
+A build job is enqueued in the background queue. You can monitor its progress in **Administration > Jobs**.
+
+<Aside>Build times vary from 1-10 minutes depending on repository size, dependencies, and template complexity.</Aside>
+
+## Rebuilding Images
+
+Rebuild an image when:
+
+- You've pushed new code to the configured branch.
+- Dependencies have been updated.
+- The `.rearch/` folder or Dockerfile has changed.
+- You want the container environment to reflect the latest state of the branch.
+
+To rebuild, click **Build Docker Image** again from the repository settings. The new image replaces the previous one.
+
+## Scheduled Rebuilds
+
+Administrators can configure automatic image rebuilds on a schedule so that images stay up to date without manual intervention. This is configured from **Administration > Settings**.
+
+Scheduled rebuilds clone the latest commit from the configured branch and run the Docker build. If the build fails, the previous working image is preserved.
+
+## Templates vs Custom Images
+
+| Aspect | Templates | Custom `.rearch/` |
+|---|---|---|
+| Setup effort | None — select and build | Must create Dockerfile and entrypoint |
+| Customization | Limited to template defaults | Full control |
+| Databases | Not available | Supported |
+| Custom services | Not available | Unlimited |
+| Repo changes required | None | Must add `.rearch/` folder |
+
+See [Repositories](/get-started/repositories/) for a full comparison of templates and custom configurations.
+
+## Image Storage
+
+Images are stored in the Docker daemon's local storage on the host running the backend. In a Swarm deployment, images must be accessible to the node where conversation containers will run.
+
+<Aside type="caution">ReArch does not push images to an external registry by default. If you run a multi-node Swarm, you need to configure a shared registry or ensure images are built on the node that runs conversation containers.</Aside>
+
+## Cleaning Up Old Images
+
+When a new image is built for a repository, the previous image is replaced. Docker's standard image garbage collection applies — untagged images may remain until `docker image prune` is run.

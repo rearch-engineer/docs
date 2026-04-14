@@ -12,6 +12,11 @@
   --sl-font: "Inter", sans-serif;
   --sl-line-height: 1.8;
 
+  /* Bump text scale up from Starlight defaults */
+  --sl-text-xs: 0.875rem;   /* 14px (was 13px) */
+  --sl-text-sm: 0.9375rem;  /* 15px (was 14px) */
+  --sl-text-base: 1.0625rem; /* 17px (was 16px) */
+
   /* Layout */
   --sl-content-width: 50rem;
   --sl-sidebar-width: 17rem;
@@ -70,3 +75,17 @@
 .sl-markdown-content b {
   font-weight: 600;
 }
+
+/* ---- "On this page" right sidebar ---- */
+/* Starlight sets font-size inside @layer starlight.core which
+   reads the var at definition time. Override the rendered output. */
+.right-sidebar-panel {
+  margin-top: 1.5rem;
+}
+
+.right-sidebar-panel a {
+  font-size: var(--sl-text-sm) !important;
+  line-height: 1.8;
+  padding-block: 0.35rem;
+}
+

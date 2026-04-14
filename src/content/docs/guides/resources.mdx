@@ -1,6 +1,61 @@
 ---
 title: Resources
-description: Manage and configure resources within your ReArch projects.
+description: Connect and manage git provider workspaces in ReArch.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+Resources represent connections to git provider workspaces (GitHub organizations or Bitbucket workspaces). Each resource stores the credentials needed to access the provider's API and clone repositories.
+
+<Aside>Resource management requires the **Admin** role. Once a resource is configured, any user can start conversations with its enabled repositories.</Aside>
+
+## Supported Providers
+
+| Provider | Authentication | Features |
+|---|---|---|
+| **Bitbucket** | API token + clone username | Repository import, clone, push, pull request creation, workspace member listing |
+| **GitHub** | GitHub App (installation ID + private key) | Repository import, clone, push, pull request creation |
+
+## Creating a Resource
+
+1. Navigate to **Resources > New**.
+2. Select your provider.
+3. Fill in the connection details (see provider-specific fields below).
+4. Click **Save**.
+
+ReArch validates the credentials against the provider API before saving. If validation fails, check that your token has the required permissions.
+
+### Bitbucket Fields
+
+| Field | Description |
+|---|---|
+| **Name** | Display name for this connection. |
+| **Workspace** | The Bitbucket workspace slug. |
+| **Email** | Atlassian account email for API authentication. |
+| **Clone Username** | Bitbucket username for HTTPS clone operations. |
+| **API Token** | Atlassian API token with repository read/write access. |
+
+### GitHub Fields
+
+| Field | Description |
+|---|---|
+| **Name** | Display name for this connection. |
+| **Organization** | The GitHub organization name. |
+| **Installation ID** | The GitHub App installation ID. |
+| **Private Key** | The GitHub App private key (PEM format). |
+
+## Managing Repositories
+
+After creating a resource, import specific repositories from it. See [Repositories](/get-started/repositories/) for the full guide on importing, enabling, configuring templates, and building Docker images.
+
+## Editing a Resource
+
+1. Navigate to **Resources** and click on the resource.
+2. Update the fields as needed.
+3. Click **Save**.
+
+Credential changes take effect immediately for all subsequent API calls and clone operations.
+
+## Deleting a Resource
+
+Deleting a resource removes the provider connection and all its imported repositories. Existing conversations that reference those repositories continue to function (the container is already running with a cloned copy), but no new conversations can be created for those repositories.

@@ -1,38 +1,37 @@
 ---
 title: Overview
-description: Background AI. Let your entire workforce ship.
+description: What ReArch does and how it fits into your development workflow.
 ---
 
-Learn how to get started and implement ReArch Engineer through our developer resources.
+ReArch is a self-hosted platform that gives your team access to AI coding agents running in isolated Docker containers. Each agent works against a real clone of your repository — reading, modifying, and running code in a sandboxed environment.
 
-### Key Features
+## Key Features
 
-- **Background Execution** — Sandboxed VMs that work while you sleep.
-- **MCP Support** — Choose from the gallery, or use your own.
-- **Visual Verification** — Screenshots and live previews.
-- **Multiplayer** — Collaborate in real-time sessions.
-- **Your Repositories** — Connect GitHub or Bitbucket. No migration needed, no lock-in.
-- **Last Frontier Models** — Cutting-edge AI models.
-- **Cost Monitoring** — Statistics per user, conversation, and more.
-- **Work Space** — VS Code also available.
-
-## Scaffold exactly what you need
-
-The ReArch Agent lets you pick your starting point. Need custom pages? Use `--pages` and they're generated with routes and nav already wired. Pair it with `--i18n` and you get localized versions too — translations scaffolded and ready.
-
-No prompts to click through. No wizard to escape. Just flags that do what they say.
+- **Isolated environments** — Each conversation runs in its own Docker container with VS Code, an AI agent, and your application runtime.
+- **Repository integration** — Connect GitHub or Bitbucket. No migration needed, no lock-in.
+- **MCP tool support** — Extend agent capabilities with external tools (GitHub, Sentry, Slack, Stripe, and more) via the Model Context Protocol.
+- **Visual verification** — Agents can launch your application, take screenshots, and verify UI changes.
+- **Multiple LLM providers** — Use Anthropic Claude, Google Gemini, OpenAI GPT, or other providers. Switch models per conversation.
+- **Cost monitoring** — Per-user and per-conversation cost tracking with analytics dashboards.
+- **Self-hosted** — Runs on your infrastructure. Your code stays in your network.
 
 ## How it works
 
-1. **Connect your repositories** — Link your GitHub or Bitbucket repos. ReArch clones, indexes, and understands your codebase automatically.
-2. **Describe what you need** — Use natural language to tell ReArch what to build, fix, or improve. Anyone on your team can do this — not just engineers.
-3. **ReArch works in the background** — A sandboxed VM spins up, writes the code, runs tests, and takes visual screenshots for verification.
-4. **Review and ship** — Get a pull request with the changes, preview the results, and merge when ready.
+1. **Connect your repositories** — Link your GitHub or Bitbucket workspace. ReArch imports repository metadata and builds Docker images containing your code and dependencies.
+2. **Describe what you need** — Use natural language to tell the agent what to build, fix, or improve. Anyone on your team can do this.
+3. **ReArch works in the background** — A sandboxed container spins up, the agent writes code, runs tests, and takes screenshots for verification.
+4. **Review and ship** — Review the diff, commit, push to a branch, and create a pull request — all from within ReArch.
 
 ## Use cases
 
-- **Non-technical teammates shipping features** — Product managers, designers, and ops teams describe what they need and ReArch delivers working code.
-- **Bug fixes and maintenance** — Point ReArch at an issue and let it investigate, fix, and verify the solution while you focus on other work.
-- **Scaffolding new projects** — Spin up pages, components, API routes, and i18n support with a single command.
-- **Code reviews and refactoring** — Let ReArch analyze your codebase and propose improvements, migrations, or cleanups.
-- **Prototyping and experimentation** — Quickly test ideas without pulling engineers off their current sprint.
+- **Non-technical teammates shipping features** — Product managers, designers, and ops teams describe what they need and receive working pull requests.
+- **Bug fixes and maintenance** — Point the agent at an issue and let it investigate, fix, and verify the solution.
+- **Scaffolding new projects** — Spin up pages, components, API routes, and tests with a single prompt.
+- **Code reviews and refactoring** — Let the agent analyze your codebase and propose improvements, migrations, or cleanups.
+- **Prototyping and experimentation** — Test ideas without pulling engineers off their current sprint.
+
+## Next steps
+
+- [Quick Start](/get-started/quick-start/) — Get your first conversation running in under 10 minutes.
+- [Architecture](/concepts/architecture/) — Understand how ReArch's components fit together.
+- [Key Concepts & Glossary](/concepts/glossary/) — Learn the terminology used throughout these docs.

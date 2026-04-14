@@ -1,0 +1,41 @@
+---
+title: What is ReArch?
+description: An overview of what ReArch does, how it works, and who it is for.
+---
+
+ReArch is a self-hosted platform that connects your team to AI coding agents. Each agent runs inside an isolated Docker container with full access to a cloned repository. Team members describe tasks in natural language, and the agent writes code, runs tests, takes screenshots, and delivers pull requests — all without requiring a local development environment.
+
+## How it works
+
+1. **Connect your repositories.** Link your GitHub or Bitbucket workspace. ReArch imports repository metadata and builds Docker images containing your code and dependencies.
+
+2. **Start a conversation.** A team member selects a repository and starts a conversation. ReArch provisions a sandboxed container with VS Code (code-server), an AI coding agent (OpenCode), and your application's runtime environment.
+
+3. **Describe what you need.** The user types a task in natural language — a bug fix, a new feature, a refactor, a test. The agent reads, modifies, and runs code inside the container.
+
+4. **Review and ship.** The agent's changes appear as a diff in the session sidebar. The user reviews the changes, commits, pushes to a branch, and creates a pull request — all from within ReArch.
+
+## Who is ReArch for?
+
+| Role | How they use ReArch |
+|---|---|
+| **Developers** | Offload repetitive coding tasks, prototype ideas, fix bugs in parallel with other work. |
+| **Product managers** | Describe features or fixes in natural language and receive working pull requests without writing code. |
+| **DevOps engineers** | Deploy and operate the platform, configure authentication, manage Docker images, and monitor usage. |
+| **Team leads** | Track AI usage costs, review agent output, and manage team access. |
+
+## Key capabilities
+
+- **Isolated environments** — Each conversation runs in its own Docker container. No shared state, no side effects between sessions.
+- **Repository integration** — GitHub and Bitbucket support. The agent works on a real clone of your codebase.
+- **MCP tool support** — Extend agent capabilities with Model Context Protocol servers (GitHub, Sentry, Slack, Stripe, and more).
+- **Visual verification** — Agents can launch your application, navigate pages, take screenshots, and verify UI changes.
+- **Multiple LLM providers** — Use Anthropic Claude, Google Gemini, OpenAI GPT, or other providers. Configure them from the admin panel.
+- **Cost monitoring** — Per-conversation and per-user cost tracking with analytics dashboards.
+- **Self-hosted** — Runs on your infrastructure. Your code never leaves your network.
+
+## What ReArch is not
+
+- **Not a hosted SaaS** (unless you use ReArch Cloud). You deploy it on your own infrastructure.
+- **Not a code editor.** VS Code is available inside containers for inspection, but the primary interface is the chat.
+- **Not a CI/CD pipeline.** ReArch creates pull requests. Your existing CI/CD pipeline handles the rest.

@@ -1,0 +1,203 @@
+---
+title: Self-Hosting
+description: Deploy ReArch on your own infrastructure using Docker Swarm and Traefik.
+---
+
+import { Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This guide covers deploying ReArch to a production environment using Docker Swarm with Traefik as the reverse proxy. By the end, you will have a fully operational ReArch instance accessible over HTTPS with Keycloak authentication.
+
+**Prerequisites:**
+- A Linux server (or cluster) with Docker Engine 24+ and Swarm mode initialized
+- A domain name with DNS configured (see [Domain Setup](#domain-setup))
+- Traefik v3 running as a Docker Swarm service on an external overlay network
+- Familiarity with Docker Compose and environment variables
+
+## Domain Setup
+
+ReArch uses subdomain-based routing. Configure DNS records pointing to your server:
+
+| Record | Value | Purpose |
+|---|---|---|
+| `app.<domain>` | Server IP | Frontend |
+| `api.<domain>` | Server IP | Backend API |
+| `auth.<domain>` | Server IP | Keycloak |
+| `*.<domain>` | Server IP | Conversation containers (wildcard) |
+
+A wildcard DNS record is required because each conversation container gets a unique subdomain (e.g., `conv-abc123.<domain>`).
+
+## Prepare the Environment
+
+<Steps>
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/rearch-engineer/rearch.git
+   cd rearch
+   ```
+
+2. **Create the environment file**
+
+   ```bash
+   cp .env.stack.example .env
+   ```
+
+3. **Edit `.env` with your values**
+
+   At minimum, set these variables:
+
+   ```bash
+   # Your domain (subdomains are derived automatically)
+   DOMAIN=yourdomain.com
+
+   # Strong random secrets — generate with: openssl rand -base64 32
+   JWT_SECRET=<generated-secret>
+   ADMIN_PASSWORD=<strong-password>
+   KEYCLOAK_ADMIN_PASSWORD=<strong-password>
+   KEYCLOAK_DB_PASSWORD=<strong-password>
+   MCP_PROXY_SECRET=<generated-secret>
+
+   # OAuth2 Proxy cookie secret — generate with: openssl rand -base64 32 | tr -- '+/' '-_'
+   OAUTH2_PROXY_COOKIE_SECRET=<generated-secret>
+   ```
+
+   <Aside type="caution">Never commit the `.env` file to version control. It contains secrets.</Aside>
+
+   See [Configuration Reference](/reference/configuration/) for the complete list of environment variables.
+
+4. **Ensure the Traefik network exists**
+
+   ```bash
+   docker network create --driver overlay traefik_network
+   ```
+
+   If you are using an existing Traefik setup with a different network name, edit the `docker-compose-traefik.yml` file and update the external network reference.
+
+</Steps>
+
+## Deploy the Stack
+
+<Tabs>
+  <TabItem label="Standalone Traefik">
+    If you run Traefik as its own Swarm service:
+
+    ```bash
+    docker stack deploy -c docker-compose-traefik.yml rearch
+    ```
+
+    This compose file uses `traefik_network` as the external overlay network and pulls images from `ghcr.io/rearch-engineer/`.
+  </TabItem>
+  <TabItem label="Portainer Traefik">
+    If Traefik is managed by Portainer:
+
+    ```bash
+    docker stack deploy -c docker-compose.yml rearch
+    ```
+
+    This compose file uses `portainer_default` as the external network.
+  </TabItem>
+</Tabs>
+
+The stack deploys the following services:
+
+| Service | Image | Port |
+|---|---|---|
+| Frontend | `ghcr.io/rearch-engineer/rearch-frontend:latest` | 80 (behind Traefik) |
+| Backend | `ghcr.io/rearch-engineer/rearch-backend:latest` | 5000 (behind Traefik) |
+| MCP Proxy | `ghcr.io/rearch-engineer/rearch-mcp-proxy:latest` | 3100 (internal) |
+| Keycloak | `quay.io/keycloak/keycloak:24.0` | 8080 (behind Traefik) |
+| Keycloak DB | `postgres:16-alpine` | 5432 (internal) |
+| OAuth2 Proxy | `quay.io/oauth2-proxy/oauth2-proxy:v7.6.0` | 4180 (internal) |
+| Redis | `redis:7-alpine` | 6379 (internal) |
+| MongoDB | `mongo:7` | 27017 (internal) |
+
+## Post-Deployment Setup
+
+<Steps>
+
+1. **Configure Keycloak**
+
+   The realm export (`keycloak/realm-export.json`) is auto-imported on first boot. After deployment:
+
+   - Open `https://auth.<domain>/admin` and log in with your Keycloak admin credentials.
+   - Go to the `rearch` realm.
+   - Update the client secrets for `rearch-backend` and `rearch-proxy` (the export contains placeholder values).
+   - Update redirect URIs and web origins to match your domain.
+   - Create your first user and assign the `admin` role.
+
+   See [Keycloak Setup](/deploy/keycloak/) for the full step-by-step guide.
+
+2. **Update environment variables with Keycloak secrets**
+
+   After configuring Keycloak, copy the client secrets into your `.env` file:
+
+   ```bash
+   KEYCLOAK_BACKEND_CLIENT_SECRET=<secret-from-rearch-backend-client>
+   OAUTH2_PROXY_CLIENT_SECRET=<secret-from-rearch-proxy-client>
+   ```
+
+   Redeploy the stack to apply the changes:
+
+   ```bash
+   docker stack deploy -c docker-compose-traefik.yml rearch
+   ```
+
+3. **Configure an LLM provider**
+
+   Log in to `https://app.<domain>` as your admin user. Navigate to **Administration > Settings > LLM Providers** and add at least one provider with an API key.
+
+4. **Connect a git provider and import repositories**
+
+   Navigate to **Resources > New**, connect your GitHub or Bitbucket workspace, import repositories, enable them, and build Docker images.
+
+</Steps>
+
+## Docker Socket Access
+
+The backend service mounts the Docker socket (`/var/run/docker.sock`) to create and manage conversation containers programmatically. This is required for ReArch to function.
+
+<Aside type="caution">Docker socket access grants full control over the Docker daemon. In production, consider using a Docker socket proxy (like [Tecnativa/docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy)) to restrict which API calls the backend can make.</Aside>
+
+## Updating
+
+To update ReArch to the latest version:
+
+```bash
+# Pull the latest images
+docker service update --image ghcr.io/rearch-engineer/rearch-frontend:latest rearch_frontend
+docker service update --image ghcr.io/rearch-engineer/rearch-backend:latest rearch_backend
+docker service update --image ghcr.io/rearch-engineer/rearch-mcp-proxy:latest rearch_mcp-proxy
+```
+
+The Docker Compose files configure rolling updates with rollback on failure, so services are updated one replica at a time with zero downtime.
+
+## Volumes and Persistence
+
+The stack creates the following named volumes:
+
+| Volume | Service | Content |
+|---|---|---|
+| `redis-data` | Redis | Job queue state (AOF persistence) |
+| `mongodb-data` | MongoDB | All application data |
+| `keycloak-db-data` | Keycloak DB | Keycloak realm, users, sessions |
+| `backend-data` | Backend | Uploaded files, temporary build artifacts |
+
+**Back up `mongodb-data` and `keycloak-db-data` regularly.** These contain all application and identity data. Redis data is transient and can be safely lost (jobs will be re-created).
+
+## TLS Certificates
+
+Both Docker Compose files configure Traefik to use Let's Encrypt for automatic TLS certificate provisioning. The `certresolver=le` label on each service's Traefik configuration requests certificates automatically.
+
+If you use your own certificates or a different certificate authority, update the Traefik configuration accordingly.
+
+## Security Checklist
+
+- [ ] All secrets in `.env` are strong, randomly generated values
+- [ ] Default admin password has been changed
+- [ ] Keycloak placeholder client secrets have been replaced
+- [ ] HTTPS is enforced on all endpoints
+- [ ] Docker socket access is restricted (socket proxy recommended)
+- [ ] MongoDB and Redis are not exposed to the public network
+- [ ] Brute force protection is enabled in Keycloak
+- [ ] Firewall rules restrict access to management ports

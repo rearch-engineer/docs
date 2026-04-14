@@ -21,7 +21,7 @@
   border-radius: 0.5rem;
   text-decoration: none;
   color: var(--sl-color-gray-2);
-  font-size: var(--sl-text-base);
+  font-size: var(--sl-text-sm);
   font-weight: 500;
   line-height: 1.4;
   cursor: pointer;
@@ -96,7 +96,7 @@
   border-radius: 0.5rem;
   text-decoration: none;
   color: var(--sl-color-gray-2);
-  font-size: var(--sl-text-sm);
+  font-size: var(--sl-text-xs);
   font-weight: 500;
   line-height: 1.4;
   cursor: pointer;
@@ -179,7 +179,7 @@ details[open] > .custom-sidebar-subnav-trigger .custom-sidebar-chevron {
   padding: 0.35rem 0.5rem 0.35rem 0.75rem;
   text-decoration: none;
   color: var(--sl-color-gray-2);
-  font-size: var(--sl-text-sm);
+  font-size: var(--sl-text-xs);
   line-height: 1.5;
   transition: color 0.15s;
 }

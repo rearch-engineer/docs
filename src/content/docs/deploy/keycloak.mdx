@@ -1,0 +1,256 @@
+---
+title: Keycloak Setup
+description: Configure Keycloak as the identity provider for ReArch in production deployments.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This guide covers configuring Keycloak for use with ReArch when using `AUTH_MODE=KEYCLOAK_FIREWALL`. ReArch requires three Keycloak clients within a single realm.
+
+<Aside>A realm export file is provided at `keycloak/realm-export.json` and is auto-imported on first boot. If you prefer to skip manual configuration, see [Using the Realm Export](#using-the-realm-export-auto-import) at the bottom of this page.</Aside>
+
+**Prerequisites:**
+- A running Keycloak instance (e.g., `https://auth.example.com`)
+- Admin access to the Keycloak admin console
+- Your ReArch frontend URL (e.g., `https://app.example.com`)
+
+Throughout this guide, replace `example.com` with your actual domain.
+
+## Step 1: Create the Realm
+
+<Steps>
+
+1. Log in to the Keycloak admin console at `https://auth.example.com/admin`.
+2. Click the realm dropdown in the top-left corner and click **Create realm**.
+3. Set the **Realm name** to `rearch` and click **Create**.
+
+</Steps>
+
+After creating the realm, go to **Realm settings** and configure:
+
+| Setting | Value |
+|---|---|
+| Display name | `ReArch` |
+| User registration | Off |
+| Login with email | On |
+| Duplicate emails | Off |
+| Reset password | On |
+| Edit username | Off |
+| Brute force detection | On |
+
+## Step 2: Create Realm Roles
+
+Go to **Realm roles** in the left sidebar and create two roles:
+
+| Role | Description |
+|---|---|
+| `user` | Standard user role. Assigned by default to all new users. |
+| `admin` | Administrator role. Grants access to user management, settings, jobs, and analytics. |
+
+After creating both roles, go to **Realm settings > Default roles** and add `user` as a default role so every new user receives it automatically.
+
+## Step 3: Create the Client Scope
+
+ReArch expects realm roles in the access token under a `realm_roles` claim.
+
+<Steps>
+
+1. Go to **Client scopes** and click **Create client scope**.
+2. Set **Name** to `roles`, **Protocol** to `OpenID Connect`, and enable **Include in token scope**.
+3. Save the scope, then go to the **Mappers** tab.
+4. Click **Add mapper > By configuration > User Realm Role** and configure:
+
+</Steps>
+
+| Setting | Value |
+|---|---|
+| Name | `realm roles` |
+| Multivalued | On |
+| Token Claim Name | `realm_roles` |
+| Claim JSON Type | `String` |
+| Add to ID token | On |
+| Add to access token | On |
+| Add to userinfo | On |
+
+## Step 4: Create the Clients
+
+ReArch uses three Keycloak clients:
+
+### Client 1: `rearch-app` (Frontend SPA)
+
+A **public** client used by the React frontend for Authorization Code flow with PKCE.
+
+**General settings:** Client ID `rearch-app`, Name `ReArch Frontend`.
+
+**Capability config:**
+
+| Setting | Value |
+|---|---|
+| Client authentication | Off |
+| Standard flow | Checked |
+| All other flows | Unchecked |
+
+**Login settings:**
+
+| Setting | Value |
+|---|---|
+| Root URL | `https://app.example.com` |
+| Valid redirect URIs | `https://app.example.com/*` and `http://localhost:4200/*` |
+| Web origins | `https://app.example.com` and `http://localhost:4200` |
+
+After saving, go to the **Advanced** tab and set **Proof Key for Code Exchange Code Challenge Method** to `S256`.
+
+Then go to **Client scopes**, add `roles` as a default scope, and add a **User Realm Role** mapper (same configuration as Step 3) on the `rearch-app-dedicated` scope.
+
+### Client 2: `rearch-backend` (Backend API)
+
+A **confidential** client for service-to-service token validation.
+
+**General settings:** Client ID `rearch-backend`, Name `ReArch Backend`.
+
+**Capability config:**
+
+| Setting | Value |
+|---|---|
+| Client authentication | On |
+| Service accounts roles | Checked |
+| All other flows | Unchecked |
+
+After saving, go to the **Credentials** tab and copy the **Client secret**. Set it as the `KEYCLOAK_BACKEND_CLIENT_SECRET` environment variable.
+
+Add the `roles` scope and realm roles mapper as with `rearch-app`.
+
+### Client 3: `rearch-proxy` (OAuth2 Proxy)
+
+A **confidential** client for Traefik forward-auth, protecting conversation containers.
+
+**General settings:** Client ID `rearch-proxy`, Name `ReArch OAuth2 Proxy`.
+
+**Capability config:**
+
+| Setting | Value |
+|---|---|
+| Client authentication | On |
+| Standard flow | Checked |
+| All other flows | Unchecked |
+
+**Login settings:**
+
+| Setting | Value |
+|---|---|
+| Root URL | `https://app.example.com` |
+| Valid redirect URIs | `https://app.example.com/oauth2/callback` and `https://*.example.com/oauth2/callback` |
+| Web origins | `https://app.example.com` and `https://*.example.com` |
+
+Copy the **Client secret** and set it as `OAUTH2_PROXY_CLIENT_SECRET`.
+
+Add the `roles` scope and realm roles mapper as with the other clients.
+
+## Step 5: Create Users
+
+<Steps>
+
+1. Go to **Users** and click **Add user**.
+2. Set the email, first name, and last name. Toggle **Email verified** to On.
+3. Go to the **Credentials** tab and set a password.
+4. Go to the **Role mapping** tab, click **Assign role**, and assign both `user` and `admin`.
+
+</Steps>
+
+The backend syncs roles from the Keycloak token on every authenticated request. Role changes in Keycloak take effect on the user's next API request.
+
+## Step 6: Configure Environment Variables
+
+### Backend
+
+| Variable | Value |
+|---|---|
+| `AUTH_MODE` | `KEYCLOAK_FIREWALL` |
+| `KEYCLOAK_REALM_URL` | `https://auth.example.com/realms/rearch` |
+| `KEYCLOAK_CLIENT_ID` | `rearch-backend` |
+| `KEYCLOAK_CLIENT_SECRET` | Client secret from `rearch-backend` |
+
+### Frontend
+
+| Variable | Value |
+|---|---|
+| `KEYCLOAK_URL` | `https://auth.example.com` |
+| `KEYCLOAK_REALM` | `rearch` |
+| `KEYCLOAK_CLIENT_ID` | `rearch-app` |
+
+### OAuth2 Proxy
+
+| Variable | Value |
+|---|---|
+| `OAUTH2_PROXY_CLIENT_ID` | `rearch-proxy` |
+| `OAUTH2_PROXY_CLIENT_SECRET` | Client secret from `rearch-proxy` |
+| `OAUTH2_PROXY_OIDC_ISSUER_URL` | `https://auth.example.com/realms/rearch` |
+| `OAUTH2_PROXY_REDIRECT_URL` | `https://app.example.com/oauth2/callback` |
+| `OAUTH2_PROXY_COOKIE_SECRET` | Random 32-byte base64 string (generate with `openssl rand -base64 32`) |
+| `OAUTH2_PROXY_COOKIE_DOMAINS` | `.example.com` |
+| `OAUTH2_PROXY_WHITELIST_DOMAINS` | `.example.com` |
+
+## Clients Summary
+
+| Client | Type | Auth Flow | Purpose |
+|---|---|---|---|
+| `rearch-app` | Public | Authorization Code + PKCE | Frontend SPA login |
+| `rearch-backend` | Confidential | Service Account | Token validation |
+| `rearch-proxy` | Confidential | Authorization Code | Traefik forward-auth for containers |
+
+## How Roles Work
+
+ReArch recognizes two realm roles:
+
+| Role | Access |
+|---|---|
+| `user` | Standard access. Can create conversations, send messages, push changes. |
+| `admin` | Full access. Adds user management, LLM provider config, MCP servers, jobs dashboard, usage analytics, and application settings. |
+
+Roles are extracted from the Keycloak access token and synced to the application database on every authenticated request. Keycloak is the source of truth for role assignments.
+
+## Using the Realm Export (Auto-Import)
+
+Instead of configuring everything manually, use the provided realm export. When Keycloak starts with `KC_IMPORT` pointing to `keycloak/realm-export.json`, it auto-creates the realm, roles, scopes, and all three clients.
+
+After the auto-import, you still need to:
+
+1. **Replace placeholder client secrets** — The export contains `CHANGE_ME_BACKEND_SECRET` and `CHANGE_ME_PROXY_SECRET`.
+2. **Update redirect URIs and web origins** to match your domain.
+3. **Create your first user** and assign the `admin` role.
+4. **Set the environment variables** with the real client secrets.
+
+## Troubleshooting
+
+### "Invalid redirect_uri" error during login
+
+The redirect URI does not match the Keycloak client configuration. Verify that **Valid redirect URIs** for `rearch-app` includes `https://app.example.com/*` (with the trailing wildcard).
+
+### CORS errors in the browser console
+
+The frontend domain is not listed in the **Web origins** of `rearch-app`. Add `https://app.example.com`. For local development, also add `http://localhost:4200`.
+
+### "Client not found" error
+
+The `KEYCLOAK_CLIENT_ID` does not match any client in the `rearch` realm. Check the spelling.
+
+### User has no admin access after role assignment
+
+Roles are synced from the Keycloak token. The user needs to log out and back in (or make a new API request) for the updated token to be issued.
+
+### Token validation fails on the backend
+
+Verify that `KEYCLOAK_REALM_URL` is correct and that the backend can reach Keycloak's JWKS endpoint at `https://auth.example.com/realms/rearch/protocol/openid-connect/certs`.
+
+### "Unauthorized" when accessing the frontend
+
+Remove forward-auth middleware from the frontend Traefik router. The SPA handles authentication via keycloak-js and must be publicly accessible so it can load before initiating the login flow. Forward-auth should only protect conversation container routes.
+
+## Security Considerations
+
+- Always use HTTPS for all endpoints in production.
+- Rotate client secrets periodically and update the corresponding environment variables.
+- Use PKCE (S256) for the frontend client to prevent authorization code interception.
+- Keep `rearch-backend` restricted to service account flows only (no browser-based flows).
+- Enable brute force protection in the realm settings.
+- Set appropriate token lifespans based on your security requirements.

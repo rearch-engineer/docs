@@ -1,6 +1,54 @@
 ---
 title: Jobs
-description: Schedule and manage background jobs in ReArch.
+description: Monitor and manage background jobs that handle container provisioning, image builds, and scheduled tasks.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+ReArch uses a background job queue (BullMQ backed by Redis) to handle asynchronous operations. The Jobs dashboard provides visibility into active, completed, and failed jobs.
+
+<Aside>The Jobs dashboard requires the **Admin** role.</Aside>
+
+## Job Types
+
+| Queue | Job Type | Description |
+|---|---|---|
+| **conversations** | Container setup | Provisions a Docker container when a conversation is created. Clones the repo, starts services, and connects the agent. |
+| **conversations** | Container teardown | Stops and removes a container when a conversation is deleted. |
+| **resources** | Image build | Builds a Docker image from a repository's template or custom `.rearch/` folder. |
+
+## Viewing Jobs
+
+Navigate to **Administration > Jobs** to see the job dashboard. Jobs are displayed with:
+
+| Column | Description |
+|---|---|
+| **ID** | Unique job identifier. |
+| **Type** | The job type (e.g., container setup, image build). |
+| **Status** | `active`, `completed`, `failed`, `waiting`, or `delayed`. |
+| **Progress** | A percentage indicator for long-running jobs. |
+| **Created** | When the job was enqueued. |
+| **Duration** | How long the job took (or has been running). |
+
+## Failed Jobs
+
+When a job fails, it is marked with a `failed` status and the error message is available in the job details. Common failure causes:
+
+| Failure | Likely Cause |
+|---|---|
+| Container setup fails | Docker daemon unreachable, image not found, insufficient disk space, or network issues. |
+| Image build fails | Dockerfile syntax error, missing dependencies, or repository access issues. |
+| Container teardown fails | Container was already removed manually. |
+
+Failed jobs can be retried from the dashboard.
+
+## Scheduled Tasks
+
+In addition to user-triggered jobs, ReArch runs periodic scheduled tasks:
+
+| Task | Interval | Description |
+|---|---|---|
+| **Idle container cleanup** | Configurable | Stops conversation containers that have been inactive beyond a threshold. Frees up resources on the host. |
+| **Scheduled image rebuilds** | Configurable | Rebuilds Docker images for repositories that have automatic rebuild enabled, keeping images up to date with the latest branch state. |
+
+Scheduled tasks are managed by the BullMQ scheduler and do not appear in the Jobs dashboard unless they create child jobs (e.g., a scheduled rebuild creates an image build job).

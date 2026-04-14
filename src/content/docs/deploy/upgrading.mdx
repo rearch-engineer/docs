@@ -1,0 +1,47 @@
+---
+title: Upgrading
+description: Update ReArch to the latest version.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+ReArch follows a rolling update strategy. The Docker Compose files configure update policies that replace service replicas one at a time, with automatic rollback on failure.
+
+## Docker Swarm Update
+
+To update all ReArch services to the latest version:
+
+```bash
+# Update each service individually
+docker service update --image ghcr.io/rearch-engineer/rearch-frontend:latest rearch_frontend
+docker service update --image ghcr.io/rearch-engineer/rearch-backend:latest rearch_backend
+docker service update --image ghcr.io/rearch-engineer/rearch-mcp-proxy:latest rearch_mcp-proxy
+```
+
+Or redeploy the entire stack (this also picks up Docker Compose file changes):
+
+```bash
+docker stack deploy -c docker-compose-traefik.yml rearch
+```
+
+<Aside>Conversation containers are **not** affected by ReArch upgrades. Running containers continue to operate on their previously built images. Users will need to start new conversations to use any updated container templates.</Aside>
+
+## Before Upgrading
+
+1. **Check the [Changelog](/releases/changelog/)** for breaking changes or migration steps.
+2. **Back up MongoDB** — `mongodump` the `rearch` database.
+3. **Back up Keycloak** — Export the realm or back up the PostgreSQL database.
+
+## Rollback
+
+If an update causes issues, Docker Swarm's built-in rollback reverts to the previous image:
+
+```bash
+docker service rollback rearch_backend
+docker service rollback rearch_frontend
+docker service rollback rearch_mcp-proxy
+```
+
+## Database Migrations
+
+ReArch does not use a formal migration system. Schema changes are applied automatically by the backend on startup via Mongoose model definitions. In rare cases where a manual migration is needed, it will be documented in the changelog with specific instructions.

@@ -31,11 +31,18 @@ function flattenSidebar(entries: SidebarEntry[]): SidebarLink[] {
   );
 }
 
-// Map top-level group labels to Starlight icon names
+// Map top-level group labels to Starlight icon names.
+// Chosen to match the MUI icons used in the ReArch frontend app
+// (e.g. HomeOutlined → rocket, SmartToy/Hub → list-format, Build → setting).
 const topLevelIconMap: Record<string, string> = {
-  Guides: 'open-book',
-  Reference: 'setting',
-  Learning: 'rocket',
+  'Get Started': 'rocket',
+  'Concepts': 'open-book',
+  'Guides': 'list-format',
+  'Deploy & Operate': 'setting',
+  'Reference': 'document',
+  'Learning Hub': 'star',
+  'Releases': 'information',
+  'Licensing': 'external',
 };
 
 const defaultIcon = 'document';

@@ -1,0 +1,80 @@
+---
+title: Key Concepts & Glossary
+description: Definitions of the core terms and concepts used throughout ReArch.
+---
+
+This page defines the key terms used throughout the ReArch documentation. If you encounter an unfamiliar term, check here first.
+
+## Core Concepts
+
+### Conversation
+
+An interactive session between a user and an AI coding agent. Each conversation is backed by a dedicated Docker container linked to a specific repository. Conversations track messages, agent responses, file changes, costs, and pull requests.
+
+### Resource
+
+A connection to a git provider (GitHub or Bitbucket). A resource stores workspace credentials and acts as a parent for imported repositories. Each resource represents one provider workspace.
+
+### Repository (Sub-Resource)
+
+A specific git repository imported from a resource. Repositories must be enabled before they can be used in conversations. Each repository has a configured branch, a container template (or custom `.rearch/` folder), and a built Docker image.
+
+### Container Template
+
+A pre-built environment definition that ReArch injects into a repository's Docker build. Templates provide a standard development environment without requiring changes to the repository.
+
+| Template | What it includes |
+|---|---|
+| **Minimal** | VS Code (code-server) + AI coding agent |
+| **Node.js** | Minimal + Node.js runtime with dev server |
+| **Node.js + Browser** | Node.js + Playwright with Chromium for visual verification |
+
+### Custom `.rearch/` Folder
+
+An alternative to templates. A directory at the root of your repository containing a `Dockerfile`, `entrypoint.sh`, and optionally custom agent tools. This gives full control over the container environment, including databases, custom services, and initialization logic.
+
+### Skill
+
+A reusable prompt template that can be attached to conversations or suggested to users. Skills define structured instructions that guide the AI agent's behavior for specific tasks (e.g., "Write unit tests", "Refactor to TypeScript").
+
+### Guardrail
+
+A configuration that constrains AI agent behavior. Guardrails define what the agent is allowed or not allowed to do within a conversation, such as restricting file modifications to specific directories or preventing destructive operations.
+
+### MCP Server
+
+A service that implements the [Model Context Protocol](https://modelcontextprotocol.io/), providing tools that AI agents can call. Examples include GitHub (for issue management), Sentry (for error tracking), and Brave Search (for web searches). MCP servers are configured centrally and shared across all conversations via the MCP proxy.
+
+### MCP Proxy
+
+A standalone ReArch service that connects to multiple upstream MCP servers and exposes them as a single endpoint to conversation containers. This avoids duplicating credentials and connections across containers.
+
+### LLM Provider
+
+A configured AI model provider (Anthropic, Google, OpenAI, etc.) with API credentials stored encrypted in the database. Administrators add providers through the admin panel, and users select which model to use when sending messages.
+
+## Infrastructure Terms
+
+### Docker Swarm
+
+The container orchestration mode used for production deployments. ReArch uses Docker Swarm for service replication, rolling updates, and overlay networking.
+
+### Traefik
+
+The reverse proxy that routes incoming requests to the correct service based on subdomain. Traefik also handles TLS termination, automatic Let's Encrypt certificates, and forward-auth middleware for protecting conversation containers.
+
+### Forward-Auth
+
+A Traefik middleware pattern where requests to conversation containers are first verified by oauth2-proxy against Keycloak. Only authenticated users can access container services (VS Code, application previews).
+
+### BullMQ
+
+The Redis-backed job queue used by ReArch for background processing. BullMQ handles container provisioning, image builds, and scheduled cleanup tasks.
+
+### code-server
+
+An open-source implementation of VS Code that runs in the browser. Each conversation container includes code-server, allowing users to browse and edit files directly alongside the AI agent.
+
+### OpenCode
+
+The AI coding agent that runs inside each conversation container. OpenCode receives natural language instructions, reads and modifies files, runs commands, and reports results back through the chat interface.

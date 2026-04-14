@@ -1,0 +1,86 @@
+---
+title: LLM Providers
+description: Configure AI model providers so your team can use language models in conversations.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+LLM providers supply the AI models that power ReArch conversations. Before anyone on your team can send a message to an AI agent, at least one provider must be configured with a valid API key.
+
+ReArch supports multiple providers simultaneously. Users select which model to use from the model selector in the chat interface.
+
+<Aside>LLM provider management requires the **Admin** role.</Aside>
+
+## Supported Providers
+
+| Provider | Models | API Key Source |
+|---|---|---|
+| **Anthropic** | Claude Opus, Sonnet, Haiku | [console.anthropic.com](https://console.anthropic.com/) |
+| **Google** | Gemini Pro, Flash, Ultra | [aistudio.google.com](https://aistudio.google.com/) |
+| **OpenAI** | GPT-4o, GPT-4, GPT-3.5 | [platform.openai.com](https://platform.openai.com/) |
+| **Custom / OpenAI-compatible** | Any model behind an OpenAI-compatible API | Varies |
+
+## Adding a Provider
+
+1. Navigate to **Administration > Settings > LLM Providers**.
+2. Click **Add Provider**.
+3. Fill in the configuration:
+
+| Field | Description |
+|---|---|
+| **Provider** | Select from the supported providers list. |
+| **Name** | A display name for this provider configuration (e.g., "Anthropic Production"). |
+| **API Key** | The API key from your provider account. |
+| **Base URL** | (Optional) Override the default API endpoint. Useful for proxies or self-hosted models. |
+| **Models** | Select which models from this provider should be available to users. |
+
+4. Click **Save**.
+
+The provider is immediately available. Users will see the enabled models in the model selector on their next conversation.
+
+## API Key Security
+
+API keys are encrypted at rest using **AES-256-GCM** before being stored in MongoDB. The encryption key is derived from the `ENCRYPTION_KEY` environment variable (a 64-character hex string). If `ENCRYPTION_KEY` is not set, ReArch falls back to deriving a key from `JWT_SECRET`.
+
+<Aside type="caution">Set a dedicated `ENCRYPTION_KEY` in production. Relying on `JWT_SECRET` is acceptable for development but provides weaker key separation.</Aside>
+
+To generate an encryption key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+## Editing a Provider
+
+1. Navigate to **Administration > Settings > LLM Providers**.
+2. Click the **Edit** button on the provider you want to modify.
+3. Update the fields. To change the API key, enter a new one — the existing key is not displayed.
+4. Click **Save**.
+
+## Removing a Provider
+
+1. Navigate to **Administration > Settings > LLM Providers**.
+2. Click the **Delete** button on the provider.
+3. Confirm the deletion.
+
+Removing a provider does not affect existing conversations that used its models. Historical messages and costs are preserved. New messages can no longer use models from the deleted provider.
+
+## Cost Tracking
+
+ReArch tracks AI usage costs per conversation. After each agent interaction, the backend calculates the cost based on:
+
+- **Input tokens** — The number of tokens in the prompt sent to the model.
+- **Output tokens** — The number of tokens in the model's response.
+- **Reasoning tokens** — Additional tokens used for chain-of-thought reasoning (model-dependent).
+
+Costs are displayed in the session sidebar during a conversation and aggregated in the [Usage Analytics](/guides/usage-analytics/) dashboard.
+
+## Multiple Providers
+
+You can configure multiple providers simultaneously. This is useful for:
+
+- **Cost optimization** — Use a cheaper model for simple tasks and a more capable model for complex ones.
+- **Redundancy** — If one provider has an outage, users can switch to another.
+- **Evaluation** — Compare model quality across providers on the same codebase.
+
+Users select their preferred model from the model selector in the chat interface. The selection persists for the current conversation but can be changed at any time.

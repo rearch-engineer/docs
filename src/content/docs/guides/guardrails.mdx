@@ -1,6 +1,42 @@
 ---
 title: Guardrails
-description: Configure guardrails to control and constrain AI agent behavior.
+description: Configure constraints that control AI agent behavior in conversations.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+Guardrails define boundaries for what the AI agent can and cannot do within conversations. They act as safety constraints that help organizations maintain control over agent behavior, especially when non-technical users are interacting with production codebases.
+
+<Aside>Guardrail configuration requires the **Admin** role.</Aside>
+
+## How Guardrails Work
+
+Guardrails are system-level instructions injected into every agent interaction. Unlike skills (which are user-selected per message), guardrails apply automatically to all conversations across the platform.
+
+When a message is sent to the agent, ReArch prepends the active guardrail rules before the user's prompt. The agent follows these constraints alongside its normal behavior.
+
+## Common Guardrail Patterns
+
+| Pattern | Description |
+|---|---|
+| **File restrictions** | Limit which files or directories the agent can modify (e.g., "Do not modify files in the `infrastructure/` directory"). |
+| **Branch protection** | Instruct the agent to never commit directly to `main` or `master`. |
+| **Language constraints** | Require the agent to use specific programming languages or frameworks. |
+| **Review-first policy** | Instruct the agent to always explain proposed changes before making them. |
+| **No destructive operations** | Prevent the agent from running `rm -rf`, `DROP TABLE`, or other destructive commands. |
+| **Code style enforcement** | Require adherence to specific coding standards, naming conventions, or formatting rules. |
+
+## Configuring Guardrails
+
+1. Navigate to **Administration > Settings**.
+2. Locate the **Guardrails** section.
+3. Define your guardrail rules.
+4. Save the configuration.
+
+Changes apply to all new messages immediately. Existing conversations will use the updated guardrails on the next message.
+
+## Tips
+
+- Keep guardrails concise and specific. Vague instructions are more likely to be misinterpreted by the model.
+- Test guardrails with a sample conversation before rolling them out to your team.
+- Use guardrails in combination with skills — guardrails set the boundaries, skills provide task-specific guidance.

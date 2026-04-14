@@ -1,0 +1,103 @@
+---
+title: Architecture
+description: How ReArch's components fit together — frontend, backend, MCP proxy, containers, and infrastructure services.
+---
+
+ReArch is composed of several services that work together to provide isolated AI coding environments. This page describes each component and how they interact.
+
+## Component Overview
+
+| Component | Technology | Purpose |
+|---|---|---|
+| **Frontend** | React 18, MUI Joy, Vite | Web UI for conversations, administration, and analytics |
+| **Backend** | Bun, Elysia.js | API server, WebSocket, Docker orchestration, job queue |
+| **MCP Proxy** | Bun | Centralized Model Context Protocol server multiplexer |
+| **MongoDB** | MongoDB 7 | Application data: users, conversations, resources, settings |
+| **Redis** | Redis 7 | Job queue (BullMQ) for container provisioning and scheduled tasks |
+| **Keycloak** | Keycloak 24 | Identity provider for SSO and role-based access (optional) |
+| **Traefik** | Traefik v3 | Reverse proxy, TLS termination, dynamic routing to containers |
+| **Conversation Containers** | Docker | Isolated environments with VS Code, OpenCode agent, and your code |
+
+## Request Flow
+
+In production, all traffic enters through Traefik, which routes requests by subdomain:
+
+```
+Internet
+  │
+  ▼
+Traefik (reverse proxy, TLS)
+  ├── app.<domain>        → Frontend (nginx serving the React SPA)
+  ├── api.<domain>        → Backend (Elysia.js API + WebSocket)
+  ├── auth.<domain>       → Keycloak (identity provider)
+  └── conv-*.<domain>     → Conversation containers (per-session, dynamic)
+```
+
+The frontend communicates with the backend over HTTPS (REST API) and WebSocket (real-time events). The backend orchestrates Docker containers, manages the job queue, and proxies AI model calls.
+
+## Conversation Containers
+
+When a user starts a conversation, the backend:
+
+1. Enqueues a container creation job in BullMQ (Redis).
+2. A worker picks up the job and uses the Docker API to create a new container from the repository's pre-built image.
+3. The container starts with supervisor managing multiple processes:
+   - **code-server** — VS Code in the browser
+   - **OpenCode** — The AI coding agent
+   - **Application runtime** — Your app's dev server (if the template supports it)
+4. Traefik detects the new container via Docker labels and routes `conv-<id>.<domain>` to it.
+5. The frontend connects to the backend via WebSocket to stream agent responses in real time.
+
+Containers are isolated from each other. Each has its own filesystem, network namespace, and process tree. When a conversation is deleted, the container is stopped and removed.
+
+## MCP Proxy
+
+The MCP Proxy sits between conversation containers and external MCP servers. Instead of each container maintaining its own connections to tools like GitHub, Sentry, or Slack, the proxy:
+
+1. Reads MCP server configurations from MongoDB.
+2. Establishes persistent connections to each upstream server.
+3. Aggregates all tools into a single catalog, prefixing tool names with the server name (e.g., `github_create_issue`).
+4. Exposes a single HTTP endpoint that all containers connect to.
+
+This design means credentials and connections are managed centrally, not per-container.
+
+## Job Queue
+
+ReArch uses BullMQ (backed by Redis) for background job processing:
+
+| Queue | Purpose |
+|---|---|
+| **conversations** | Provisioning and tearing down Docker containers |
+| **resources** | Building Docker images from repository code |
+
+A scheduler runs periodic tasks:
+- **Idle container cleanup** — Stops containers that have been inactive beyond a configured threshold.
+- **Scheduled image rebuilds** — Rebuilds Docker images on a cron schedule to keep them up to date with the latest branch state.
+
+## Authentication Modes
+
+ReArch supports three authentication configurations:
+
+| Mode | Description | Use case |
+|---|---|---|
+| **LOCAL** | Email and password, managed by ReArch. JWT tokens issued by the backend. | Development, small teams, evaluations |
+| **OAUTH** | Generic OpenID Connect. ReArch acts as an OIDC client against any compliant provider. | Integration with existing identity providers |
+| **KEYCLOAK_FIREWALL** | Keycloak with Traefik forward-auth via oauth2-proxy. Tokens validated against Keycloak's JWKS endpoint. | Production deployments with SSO and role management |
+
+## Data Storage
+
+| Store | What it holds |
+|---|---|
+| **MongoDB** | Users, conversations, messages, resources, repositories, skills, settings, LLM provider configs, MCP server configs, suggested prompts, file uploads (GridFS) |
+| **Redis** | BullMQ job queues and scheduler state |
+| **Docker volumes** | Container filesystems (ephemeral, destroyed with the container) |
+| **Keycloak PostgreSQL** | Keycloak realm configuration, users, roles, sessions (only in KEYCLOAK_FIREWALL mode) |
+
+## Network Architecture (Production)
+
+In a Docker Swarm deployment, services communicate over two networks:
+
+- **rearch** (internal overlay) — Backend, frontend, MCP proxy, Redis, MongoDB, Keycloak, and conversation containers communicate on this network. Not exposed to the internet.
+- **traefik_network** (external overlay) — Connects Traefik to the services it routes to. This is the only network with external access.
+
+Conversation containers are attached to the internal network so they can reach the MCP proxy and the backend, but their HTTP ports are only accessible through Traefik with forward-auth protection.

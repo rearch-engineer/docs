@@ -10,3 +10,30 @@
 :root[data-theme='dark'] .site-title {
   color: #fff !important;
 }
+
+/*
+ * Increase nav height to account for the two-row header.
+ * Starlight uses --sl-nav-height to position the sidebar and page content
+ * below the sticky header. Without this, content slides under it.
+ */
+:root {
+  --sl-nav-height: 5.5rem;
+}
+
+@media (min-width: 50em) {
+  :root {
+    --sl-nav-height: 6rem;
+  }
+}
+
+/* Let the header container grow to fit both rows */
+header.header {
+  height: auto !important;
+  padding-top: 0.25rem;
+  padding-bottom: 0;
+}
+
+/* Active link accent — use ReArch's brand orange */
+.rearch-nav-link.active {
+  border-bottom-color: #DB4F15 !important;
+}

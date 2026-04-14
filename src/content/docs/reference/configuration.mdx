@@ -1,0 +1,150 @@
+---
+title: Configuration Reference
+description: Complete reference of all environment variables used to configure ReArch.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page lists all environment variables used to configure the ReArch backend, frontend, and supporting services. Variables are grouped by function.
+
+## Backend
+
+### Core
+
+| Variable | Default | Description |
+|---|---|---|
+| `MONGODB_URI` | `mongodb://localhost:27017/rearch` | MongoDB connection string. |
+| `PORT` | `5000` | HTTP port the backend listens on. |
+| `DATA_PATH` | `./data` | Local path for temporary file storage. |
+| `LOG_LEVEL` | — | Logging verbosity. |
+
+### Authentication
+
+| Variable | Default | Description |
+|---|---|---|
+| `AUTH_MODE` | `LOCAL` | Authentication mode. One of `LOCAL`, `OAUTH`, or `KEYCLOAK_FIREWALL`. |
+| `JWT_SECRET` | — | **Required.** Secret key for signing JWT tokens. Use a strong random string (at least 32 characters). |
+| `JWT_EXPIRY` | `24h` | JWT token lifetime. Accepts values like `1h`, `24h`, `7d`. |
+| `ADMIN_EMAIL` | `admin@example.com` | Email for the bootstrap admin user. Created on first startup if no users exist. |
+| `ADMIN_PASSWORD` | — | Password for the bootstrap admin user. **Required** in LOCAL mode. |
+
+### OAuth / OpenID Connect (AUTH_MODE=OAUTH)
+
+| Variable | Default | Description |
+|---|---|---|
+| `OAUTH_CLIENT_ID` | — | OIDC client ID from your identity provider. |
+| `OAUTH_CLIENT_SECRET` | — | OIDC client secret. |
+| `OAUTH_REDIRECT_URI` | — | Callback URL where the provider redirects after login (e.g., `https://app.example.com/auth/callback`). |
+| `OAUTH_ISSUER_URL` | — | OIDC issuer URL. Used to discover the `.well-known/openid-configuration` endpoint. |
+
+### Keycloak (AUTH_MODE=KEYCLOAK_FIREWALL)
+
+| Variable | Default | Description |
+|---|---|---|
+| `KEYCLOAK_REALM_URL` | — | Full URL to the Keycloak realm (e.g., `https://auth.example.com/realms/rearch`). |
+| `KEYCLOAK_CLIENT_ID` | — | Backend client ID in Keycloak (confidential client). |
+| `KEYCLOAK_CLIENT_SECRET` | — | Backend client secret from the Keycloak admin console. |
+
+### Docker / Swarm
+
+| Variable | Default | Description |
+|---|---|---|
+| `DOCKER_NETWORK` | — | Overlay network name for container routing. Used in Swarm mode. |
+| `APP_DOMAIN` | — | Base domain for dynamic subdomain routing of conversation containers. |
+| `FRONTEND_URL` | — | Public URL of the frontend. Used for CORS and redirect configuration. |
+| `CONVERSATION_CONTAINER_IMAGE` | — | Default Docker image for conversation containers. |
+
+### Redis
+
+Configure Redis using **either** a URL or individual parameters:
+
+| Variable | Default | Description |
+|---|---|---|
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection URL. Takes precedence over individual parameters. |
+| `REDIS_HOST` | `localhost` | Redis hostname. Used when `REDIS_URL` is not set. |
+| `REDIS_PORT` | `6379` | Redis port. |
+| `REDIS_PASSWORD` | — | Redis password. |
+| `REDIS_TLS` | `false` | Enable TLS for Redis connections. |
+
+### LLM Provider Encryption
+
+| Variable | Default | Description |
+|---|---|---|
+| `ENCRYPTION_KEY` | — | 64-character hex string (32 bytes) for AES-256-GCM encryption of API keys stored in the database. Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Falls back to deriving a key from `JWT_SECRET` if not set. |
+
+### Rate Limiting
+
+| Variable | Default | Description |
+|---|---|---|
+| `RATE_LIMIT_AUTH_MAX` | `10` | Maximum login/register requests per window per IP. |
+| `RATE_LIMIT_AUTH_WINDOW_MS` | `900000` | Rate limit window duration in milliseconds (default: 15 minutes). |
+
+### MCP Proxy
+
+| Variable | Default | Description |
+|---|---|---|
+| `MCP_PROXY_URL` | `http://localhost:3100` | URL of the MCP proxy service. The backend uses this for health checks and reload commands. |
+| `MCP_PROXY_SECRET` | — | Shared secret for container-to-proxy authentication. Leave empty to disable authentication (development only). |
+
+---
+
+## MCP Proxy Service
+
+| Variable | Default | Description |
+|---|---|---|
+| `MCP_PROXY_PORT` | `3100` | Port the proxy HTTP server listens on. |
+| `MCP_PROXY_SECRET` | — | Shared secret for request authentication via `X-MCP-Secret` header. |
+| `MONGODB_URI` | `mongodb://localhost:27017/rearch` | MongoDB connection string for reading MCP server configurations. |
+
+---
+
+## Docker Swarm Stack
+
+These variables are used in the `docker-compose-traefik.yml` file for production deployments:
+
+| Variable | Description |
+|---|---|
+| `DOMAIN` | Base domain. Subdomains are derived: `app.<DOMAIN>`, `api.<DOMAIN>`, `auth.<DOMAIN>`. |
+| `JWT_SECRET` | JWT signing key for the backend. |
+| `JWT_EXPIRY` | JWT token lifetime. |
+| `ADMIN_EMAIL` | Bootstrap admin email. |
+| `ADMIN_PASSWORD` | Bootstrap admin password. |
+| `KEYCLOAK_ADMIN` | Keycloak admin console username. |
+| `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin console password. |
+| `KEYCLOAK_DB_PASSWORD` | PostgreSQL password for the Keycloak database. |
+| `KEYCLOAK_BACKEND_CLIENT_SECRET` | Client secret for the `rearch-backend` Keycloak client. |
+| `OAUTH2_PROXY_CLIENT_SECRET` | Client secret for the `rearch-proxy` Keycloak client. |
+| `OAUTH2_PROXY_COOKIE_SECRET` | Random 32-byte base64-encoded string for cookie encryption. Generate with: `openssl rand -base64 32 \| tr -- '+/' '-_'` |
+| `CONVERSATION_CONTAINER_IMAGE` | Docker image used for conversation containers. |
+| `MCP_PROXY_SECRET` | Shared secret for MCP proxy authentication. |
+
+---
+
+## Frontend Runtime Configuration
+
+The frontend is a static SPA served by nginx. Runtime configuration is injected at container startup via `window.__RUNTIME_CONFIG__`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_API_URL` | `/api` | Backend API URL. |
+| `VITE_SOCKET_URL` | — | WebSocket URL for real-time events. |
+| `VITE_KEYCLOAK_URL` | — | Keycloak base URL (only when using Keycloak auth). |
+| `VITE_KEYCLOAK_REALM` | — | Keycloak realm name. |
+| `VITE_KEYCLOAK_CLIENT_ID` | — | Keycloak public client ID for the frontend SPA. |
+
+---
+
+## Generating Secrets
+
+Use these commands to generate the secrets required by ReArch:
+
+```bash
+# JWT secret, Keycloak passwords, MCP proxy secret
+openssl rand -base64 32
+
+# OAuth2 Proxy cookie secret (URL-safe)
+openssl rand -base64 32 | tr -- '+/' '-_'
+
+# Encryption key for LLM API keys (64-char hex)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```

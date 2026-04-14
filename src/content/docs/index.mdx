@@ -1,15 +1,58 @@
 ---
 title: ReArch Documentation
-description: Background AI. Let your entire workforce ship.
+description: Learn how to use, administer, and deploy ReArch — the AI-powered development platform.
+template: splash
 ---
 
-Learn how to get started and implement ReArch Engineer through our developer resources.
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## Documentation
+ReArch connects your team to AI coding agents running in isolated Docker containers. Describe what you need, and ReArch writes the code, runs tests, takes screenshots, and delivers a pull request — all in the background.
 
-- [Get Started](/docs/get-started/overview/) — Overview, repositories, authentication, and useful links.
-- [Guides](/docs/guides/conversations/) — Conversations, resources, users, guardrails, skills, jobs, Docker images, MCP servers, and analytics.
-- [AI's Learning Hub](/docs/learning/) — Structured courses to master ReArch.
-- [Manage](/docs/manage/configuration/) — Configuration, self hosting, and cloud deployment.
-- [Releases](/docs/releases/changelog/) — Changelog and version history.
-- [Licensing](https://www.rearch.engineer/legal/license) — Licensing information.
+## Quick Start
+
+<LinkCard title="Get your first AI conversation running in under 10 minutes" href="/get-started/quick-start/" />
+
+## Choose your path
+
+<CardGrid>
+  <Card title="I want to use ReArch" icon="rocket">
+    Connect repositories, start conversations, and ship code with AI agents.
+
+    - [Connect repositories](/get-started/repositories/)
+    - [Start a conversation](/guides/conversations/)
+    - [Use MCP tools](/guides/mcp-servers/)
+  </Card>
+
+  <Card title="I want to administer ReArch" icon="setting">
+    Manage users, configure LLM providers, set up MCP servers, and monitor usage.
+
+    - [Manage users](/guides/users/)
+    - [Configure LLM providers](/guides/llm-providers/)
+    - [Usage analytics](/guides/usage-analytics/)
+  </Card>
+
+  <Card title="I want to deploy ReArch" icon="server">
+    Self-host ReArch on your infrastructure with Docker Swarm and Traefik.
+
+    - [Self-hosting guide](/deploy/self-hosting/)
+    - [Configuration reference](/reference/configuration/)
+    - [Keycloak setup](/deploy/keycloak/)
+  </Card>
+
+  <Card title="I want to learn" icon="open-book">
+    Structured courses to understand AI fundamentals and master ReArch workflows.
+
+    - [Learning Hub](/learning/)
+    - [Generative AI Fundamentals](/learning/generative-ai-fundamentals/)
+  </Card>
+</CardGrid>
+
+## Concepts
+
+New to ReArch? Understand the core ideas before diving in.
+
+<CardGrid>
+  <LinkCard title="What is ReArch?" href="/concepts/what-is-rearch/" description="How ReArch works and what problems it solves." />
+  <LinkCard title="Architecture" href="/concepts/architecture/" description="Components, data flow, and how they fit together." />
+  <LinkCard title="Key Concepts & Glossary" href="/concepts/glossary/" description="Definitions of Conversations, Resources, Skills, and other ReArch terms." />
+</CardGrid>

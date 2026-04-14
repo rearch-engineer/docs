@@ -21,6 +21,7 @@ export default defineConfig({
         },
       ],
       components: {
+        Header: "./src/components/CustomHeader.astro",
         Sidebar: "./src/components/CustomSidebar.astro",
       },
       customCss: [
@@ -34,6 +35,7 @@ export default defineConfig({
           label: "Get Started",
           items: [
             { label: "Overview", slug: "get-started/overview" },
+            { label: "Quick Start", slug: "get-started/quick-start" },
             { label: "Repositories", slug: "get-started/repositories" },
             {
               label: "User Authentication",
@@ -46,21 +48,54 @@ export default defineConfig({
           ],
         },
         {
+          label: "Concepts",
+          items: [
+            { label: "What is ReArch?", slug: "concepts/what-is-rearch" },
+            { label: "Architecture", slug: "concepts/architecture" },
+            {
+              label: "Key Concepts & Glossary",
+              slug: "concepts/glossary",
+            },
+          ],
+        },
+        {
           label: "Guides",
           items: [
             { label: "Conversations", slug: "guides/conversations" },
             { label: "Resources", slug: "guides/resources" },
-            { label: "Users", slug: "guides/users" },
-            { label: "Guardrails", slug: "guides/guardrails" },
-            { label: "Skills", slug: "guides/skills" },
-            { label: "Jobs", slug: "guides/jobs" },
-            { label: "Docker Images", slug: "guides/docker-images" },
+            { label: "LLM Providers", slug: "guides/llm-providers" },
             { label: "MCP Servers", slug: "guides/mcp-servers" },
+            { label: "Users", slug: "guides/users" },
+            { label: "Skills", slug: "guides/skills" },
+            { label: "Guardrails", slug: "guides/guardrails" },
+            { label: "Docker Images", slug: "guides/docker-images" },
+            { label: "Jobs", slug: "guides/jobs" },
             { label: "Usage Analytics", slug: "guides/usage-analytics" },
           ],
         },
         {
-          label: "AI's Learning Hub",
+          label: "Deploy & Operate",
+          items: [
+            { label: "Self-Hosting", slug: "deploy/self-hosting" },
+            { label: "Keycloak Setup", slug: "deploy/keycloak" },
+            {
+              label: "Monitoring & Troubleshooting",
+              slug: "deploy/monitoring",
+            },
+            { label: "Upgrading", slug: "deploy/upgrading" },
+          ],
+        },
+        {
+          label: "Reference",
+          items: [
+            {
+              label: "Configuration",
+              slug: "reference/configuration",
+            },
+          ],
+        },
+        {
+          label: "Learning Hub",
           items: [
             { label: "Learning Hub", slug: "learning" },
             {
@@ -177,14 +212,6 @@ export default defineConfig({
                 },
               ],
             },
-          ],
-        },
-        {
-          label: "Manage",
-          items: [
-            { label: "Configuration", slug: "manage/configuration" },
-            { label: "Self Hosting", slug: "manage/self-hosting" },
-            { label: "Cloud", slug: "manage/cloud" },
           ],
         },
         {

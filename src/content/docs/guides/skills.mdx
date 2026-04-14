@@ -1,6 +1,46 @@
 ---
 title: Skills
-description: Create and manage skills that extend ReArch agent capabilities.
+description: Create reusable prompt templates that guide AI agent behavior for specific tasks.
 ---
 
-This page is under construction.
+import { Aside } from '@astrojs/starlight/components';
+
+Skills are reusable prompt templates that provide structured instructions to the AI agent. Instead of writing detailed prompts from scratch each time, users can select a skill that pre-fills the context and instructions for common tasks.
+
+<Aside>Skill management requires the **Admin** role.</Aside>
+
+## How Skills Work
+
+When a user selects a skill in a conversation, the skill's prompt template is prepended to the user's message. This gives the agent context about the task type, expected output format, coding standards, or any other constraints relevant to the task.
+
+Skills are available to all users across all conversations.
+
+## Creating a Skill
+
+1. Navigate to **Administration > Skills**.
+2. Click **Add Skill**.
+3. Fill in the skill details:
+
+| Field | Description |
+|---|---|
+| **Name** | A short, descriptive name (e.g., "Write Unit Tests"). |
+| **Description** | A brief explanation of what the skill does, shown to users when selecting. |
+| **Prompt** | The full prompt template. This is the text sent to the agent before the user's message. |
+
+4. Click **Save**.
+
+## Example Skills
+
+| Skill | Prompt Summary |
+|---|---|
+| **Write Unit Tests** | "Write comprehensive unit tests for the specified code. Use the existing test framework. Cover edge cases." |
+| **Code Review** | "Review the following code for bugs, performance issues, and adherence to best practices. Provide specific, actionable feedback." |
+| **Refactor to TypeScript** | "Convert the specified JavaScript files to TypeScript. Add appropriate type annotations. Maintain existing behavior." |
+| **Documentation** | "Write clear documentation for the specified code. Include function signatures, parameter descriptions, return values, and usage examples." |
+
+## Editing and Deleting Skills
+
+- To edit, navigate to **Administration > Skills**, click on the skill, modify the fields, and save.
+- To delete, click the **Delete** button and confirm.
+
+Deleting a skill does not affect conversations that previously used it. The skill's prompt is already embedded in those conversation messages.
