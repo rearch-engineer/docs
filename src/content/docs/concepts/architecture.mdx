@@ -76,13 +76,14 @@ A scheduler runs periodic tasks:
 
 ## Authentication Modes
 
-ReArch supports three authentication configurations:
+ReArch supports four authentication configurations:
 
 | Mode | Description | Use case |
 |---|---|---|
 | **LOCAL** | Email and password, managed by ReArch. JWT tokens issued by the backend. | Development, small teams, evaluations |
 | **OAUTH** | Generic OpenID Connect. ReArch acts as an OIDC client against any compliant provider. | Integration with existing identity providers |
 | **KEYCLOAK_FIREWALL** | Keycloak with Traefik forward-auth via oauth2-proxy. Tokens validated against Keycloak's JWKS endpoint. | Production deployments with SSO and role management |
+| **NONE** | No authentication. All requests are treated as admin. | Local development only — never use in production |
 
 ## Data Storage
 

@@ -22,7 +22,7 @@ This page lists all environment variables used to configure the ReArch backend, 
 
 | Variable | Default | Description |
 |---|---|---|
-| `AUTH_MODE` | `LOCAL` | Authentication mode. One of `LOCAL`, `OAUTH`, or `KEYCLOAK_FIREWALL`. |
+| `AUTH_MODE` | `LOCAL` | Authentication mode. One of `LOCAL`, `OAUTH`, `KEYCLOAK_FIREWALL`, or `NONE`. |
 | `JWT_SECRET` | — | **Required.** Secret key for signing JWT tokens. Use a strong random string (at least 32 characters). |
 | `JWT_EXPIRY` | `24h` | JWT token lifetime. Accepts values like `1h`, `24h`, `7d`. |
 | `ADMIN_EMAIL` | `admin@example.com` | Email for the bootstrap admin user. Created on first startup if no users exist. |
@@ -36,6 +36,14 @@ This page lists all environment variables used to configure the ReArch backend, 
 | `OAUTH_CLIENT_SECRET` | — | OIDC client secret. |
 | `OAUTH_REDIRECT_URI` | — | Callback URL where the provider redirects after login (e.g., `https://app.example.com/auth/callback`). |
 | `OAUTH_ISSUER_URL` | — | OIDC issuer URL. Used to discover the `.well-known/openid-configuration` endpoint. |
+
+### No Auth (AUTH_MODE=NONE)
+
+<Aside type="caution">
+  `NONE` disables all authentication. Every request is treated as an admin. Do not use this in production.
+</Aside>
+
+No additional variables are required. All requests are granted full admin access without credentials.
 
 ### Keycloak (AUTH_MODE=KEYCLOAK_FIREWALL)
 
